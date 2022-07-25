@@ -1,0 +1,62 @@
+.progress-bar {
+  padding: 0;
+}
+
+.progress {
+  width: 50px;
+}
+
+#fileInput {
+  position: absolute;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0;
+  height: 100%;
+  left: 0px;
+  top: 0px;
+}
+
+.mat-toolbar-single-row {
+  height: auto !important;
+  background: transparent;
+  padding: 0;
+}
+
+.mat-toolbar-single-row button {
+  width: 100px;
+}
+
+.mat-form-field {
+  width: 20%;
+}
+
+.message {
+  background-color: #ddd;
+  padding: 15px;
+  color: #333;
+  border: #aaa solid 1px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.messageBoxError {
+  padding: 1%;
+  /* opacity: 0.3; */
+  margin: 1%;
+  background: rgba(255, 100, 100, .5);
+  border: 1px solid indianred;
+  font-weight: 500;
+  color: red;
+  text-align: left;
+}
+
+.messageBoxSuccessful {
+  padding: 1%;
+  /* opacity: 0.3; */
+  margin: 1%;
+  background: rgba(100, 255, 141, 0.5);
+  border: 1px solid green;
+  font-weight: 500;
+  color: green;
+  text-align: left;
+}
