@@ -1,5 +1,5 @@
 import { HttpEventType, HttpResponse } from '@angular/common/http';
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { ThemePalette } from '@angular/material/core';
 import { Observable } from 'rxjs';
@@ -8,7 +8,7 @@ import { ConfigService } from '../config.service';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, Sort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
-import { SelectionModel } from '@angular/cdk/collections';
+import { DataSource, SelectionModel } from '@angular/cdk/collections';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { DatePipe } from '@angular/common'
 
@@ -31,7 +31,14 @@ export interface DataObject {
   passport_number: string,
   phone_number: number,
   visa_category: string,
-  _id: string
+  _id: string,
+  biometric_days: number,
+  medical_days: number,
+  file_submit_days: number,
+  file_submit_priority: number,
+  biometric_days_priority: number,
+  medical_updated_priority: number,
+  visa_applied_days: number
 }
 
 
@@ -47,7 +54,7 @@ export interface DataObject {
   //   ])
   // ]
 })
-export class HomeComponent implements OnInit, AfterViewInit {
+export class HomeComponent implements OnInit, AfterViewInit, OnChanges {
 
   currentFile?: File;
   progress = 0;
@@ -82,9 +89,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
   filterValue!: FormControl;
   priorities = [
-    { value: "app_pri", viewValue: "Application Priority" },
-    { value: "med_pri", viewValue: "Medical Priority" },
-    { value: "bio_pri", viewValue: "Biometric Priority" },]
+    { value: "app_pri", viewValue: "Application Priority", selected: true },
+    { value: "med_pri", viewValue: "Medical Priority", selected: false },
+    { value: "all_pri", viewValue: "Overall Priority", selected: false },]
+  selected = 'app_pri'
+
 
 
   @ViewChild(MatSort) set matSort(ms: MatSort) {
@@ -107,11 +116,14 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
 
-  constructor(private service: ConfigService, public datepipe: DatePipe) {
+  constructor(private service: ConfigService, public datepipe: DatePipe, private cd: ChangeDetectorRef) {
     this.fileControl = new FormControl(this.files, [
       // Validators.required
     ])
     this.filterValue = new FormControl('')
+  }
+  ngOnChanges(changes: SimpleChanges): void {
+    throw new Error('Method not implemented.');
   }
 
   ngAfterViewInit() {
@@ -176,13 +188,41 @@ export class HomeComponent implements OnInit, AfterViewInit {
             d.birth_date = this.datepipe.transform(new Date(d.birth_date['$date']), 'yyyy-MM-dd');
           }
         }
-        this.dataReceived = true
+        this.dataReceived = true;
         this.dataSource.data = data;
+        this.sortGrid('app_pri')
         console.log("datasource : ", this.dataSource.data)
       },
       error => {
         console.log("error : ", error)
       })
+  }
+
+  sortGrid(sortColumn: any) {
+    if (sortColumn == 'app_pri') {
+      console.log("app_pri")
+      this.dataSource.data.sort((a, b) => {
+        return b.visa_applied_days - a.visa_applied_days
+      });
+    }else{
+      if(sortColumn == 'med_pri'){
+        console.log("med_pri")
+
+        this.dataSource.data.sort((a, b) => {
+          return a.medical_updated_priority - b.medical_updated_priority
+        });
+      }else{
+        console.log("all_pri")
+        this.dataSource.data.sort((a, b) => {
+          return a.file_submit_priority - b.file_submit_priority
+        });
+      }
+      this.dataSource.data.sort((a, b) => {
+        return b.file_submit_days - a.file_submit_days
+      });
+    } 
+    this.dataSource.data = [...this.dataSource.data];
+    console.log(this.dataSource.data);
   }
 
   getUpdatedData() {
