@@ -234,24 +234,26 @@ export class HomeComponent implements OnInit, AfterViewInit, OnChanges {
         console.log("response : ", res)
         // this.router.navigate(['/home']);
         // const tempData: DataObject[] | undefined = []
-        this.service.getData().subscribe(
-          (data: any) => {
-            const i = 0;
-            for (let d of data) {
-              d.id = i + 1;
-              if (d.birth_date) {
-                d.birth_date = this.datepipe.transform(new Date(d.birth_date['$date']), 'yyyy-MM-dd');
+        setTimeout(() => {
+          this.service.getData().subscribe(
+            (data: any) => {
+              let i = 0;
+              for (let d of data) {
+                d.id = ++i;
+                if (d.birth_date) {
+                  d.birth_date = this.datepipe.transform(new Date(d.birth_date['$date']), 'yyyy-MM-dd');
+                }
               }
+              this.dataReceived = true
+              this.dataSource.data = data;
+              console.log("datasource : ", this.dataSource.data)
             }
-            this.dataReceived = true
-            this.dataSource.data = data;
-            console.log("datasource : ", this.dataSource.data)
-          }
-          ,
-          error => {
-            console.log("error : ", error)
-          }
-        )
+            ,
+            error => {
+              console.log("error : ", error)
+            }
+          )
+        },30000);
 
       },
       error => {
