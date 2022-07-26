@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 import { ConfigService } from '../config.service';
 
 import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
+import { MatSort, Sort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { SelectionModel } from '@angular/cdk/collections';
 import { animate, state, style, transition, trigger } from '@angular/animations';
@@ -60,11 +60,13 @@ export class HomeComponent implements OnInit, AfterViewInit {
   accept: string = '.csv';
   files: any;
 
-  displayedColumns = ['full_name', 'visa_category', 'intake', 'application_date', 'biometric_date', 'medical_date', 'medical_update_date'];
+  displayedColumns = ['id', 'full_name', 'passport_number', 'visa_category', 'intake', 'application_date', 'biometric_date', 'medical_update_date'];
+  // 'medical_date',
   columnNames: any = {
     'full_name': 'Name', 'visa_category': 'Visa Category', 'intake': 'Intake',
     'application_date': 'Application Date', 'biometric_date': 'Biometric Date',
-    'medical_date': 'Medical Date', 'medical_update_date': 'Medical Update Date'
+    'medical_date': 'Medical Date', 'medical_update_date': 'Medical Update Date',
+    'passport_number': 'Passport Number', 'id': 'ID'
   }
   // displayedColumnsRest = ['name', 'weight', 'symbol', 'name2', 'weight2', 'symbol2'];
   dataSource = new MatTableDataSource<DataObject>([]);
@@ -77,6 +79,12 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
   isSuccessMessage = "";
   isErrorMessage = "";
+
+  filterValue!: FormControl;
+  priorities = [
+    { value: "app_pri", viewValue: "Application Priority" },
+    { value: "med_pri", viewValue: "Medical Priority" },
+    { value: "bio_pri", viewValue: "Biometric Priority" },]
 
 
   @ViewChild(MatSort) set matSort(ms: MatSort) {
@@ -103,6 +111,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     this.fileControl = new FormControl(this.files, [
       // Validators.required
     ])
+    this.filterValue = new FormControl('')
   }
 
   ngAfterViewInit() {
@@ -112,6 +121,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     // this.dataSource.paginator = this.paginator;
     // this.dataSource.sort = this.sort;
+    this.loadData();
   }
 
   selectFile(event: any): void {
@@ -150,7 +160,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   dataReceived = false;
-  getData() {
+  loadData() {
     this.isSuccessMessage = "";
     this.isErrorMessage = "";
     this.fileControl.setValue(null);
@@ -159,33 +169,50 @@ export class HomeComponent implements OnInit, AfterViewInit {
         console.log("response : ", data)
         // this.router.navigate(['/home']);
         const tempData: DataObject[] | undefined = []
-
+        let i = 0;
         for (let d of data) {
-          //   if (d.application_date) {
-          //     d.application_date = this.datepipe.transform(new Date(d.application_date['$date']), 'yyyy-MM-dd');
-          //   }
-          //   if (d.biometric_date) {
-          //     d.biometric_date = this.datepipe.transform(new Date(d.biometric_date['$date']), 'yyyy-MM-dd');
-          //   }
+          d.id = ++i;
           if (d.birth_date) {
             d.birth_date = this.datepipe.transform(new Date(d.birth_date['$date']), 'yyyy-MM-dd');
           }
-          //   if (d.medical_date) {
-          //     d.medical_date = this.datepipe.transform(new Date(d.medical_date['$date']), 'yyyy-MM-dd');
-          //   }
-          //   if (d.medical_update_date) {
-          //     d.medical_update_date = this.datepipe.transform(new Date(d.medical_update_date['$date']), 'yyyy-MM-dd');
-          //   }
-          //   if (d.passport_issue_date) {
-          //     d.passport_issue_date = this.datepipe.transform(new Date(d.passport_issue_date['$date']), 'yyyy-MM-dd');
-          //   }
         }
         this.dataReceived = true
         this.dataSource.data = data;
         console.log("datasource : ", this.dataSource.data)
-        console.log(this.dataSource.paginator)
-        // this.dataSource.paginator = this.paginator;
-        // this.dataSource.sort = this.sort;
+      },
+      error => {
+        console.log("error : ", error)
+      })
+  }
+
+  getUpdatedData() {
+    this.isSuccessMessage = "";
+    this.isErrorMessage = "";
+    this.fileControl.setValue(null);
+    this.service.updatedData().subscribe(
+      (res: any) => {
+        console.log("response : ", res)
+        // this.router.navigate(['/home']);
+        // const tempData: DataObject[] | undefined = []
+        this.service.getData().subscribe(
+          (data: any) => {
+            const i = 0;
+            for (let d of data) {
+              d.id = i + 1;
+              if (d.birth_date) {
+                d.birth_date = this.datepipe.transform(new Date(d.birth_date['$date']), 'yyyy-MM-dd');
+              }
+            }
+            this.dataReceived = true
+            this.dataSource.data = data;
+            console.log("datasource : ", this.dataSource.data)
+          }
+          ,
+          error => {
+            console.log("error : ", error)
+          }
+        )
+
       },
       error => {
         console.log("error : ", error)
@@ -198,21 +225,5 @@ export class HomeComponent implements OnInit, AfterViewInit {
       this.dataSource.paginator.firstPage();
     }
   }
-
-  // ELEMENT_DATA: PeriodicElement[] = [
-  //   { position: 1, name: 'Hydrogen', weight: 1.0079, symbol: 'H', name2: 'Hydrogen', weight2: 1.0079, symbol2: 'H' },
-  //   { position: 2, name: 'Helium', weight: 4.0026, symbol: 'He', name2: 'Helium', weight2: 4.0026, symbol2: 'He' },
-  //   { position: 3, name: 'Lithium', weight: 6.941, symbol: 'Li', name2: 'Lithium', weight2: 6.941, symbol2: 'Li' },
-  //   { position: 4, name: 'Beryllium', weight: 9.0122, symbol: 'Be', name2: 'Beryllium', weight2: 9.0122, symbol2: 'Be' },
-  //   { position: 5, name: 'Boron', weight: 10.811, symbol: 'B', name2: 'Boron', weight2: 10.811, symbol2: 'B' },
-  //   { position: 6, name: 'Carbon', weight: 12.0107, symbol: 'C', name2: 'Carbon', weight2: 12.0107, symbol2: 'C' },
-  //   { position: 7, name: 'Nitrogen', weight: 14.0067, symbol: 'N', name2: 'Nitrogen', weight2: 14.0067, symbol2: 'N' },
-  //   { position: 8, name: 'Oxygen', weight: 15.9994, symbol: 'O', name2: 'Oxygen', weight2: 15.9994, symbol2: 'O' },
-  //   { position: 9, name: 'Fluorine', weight: 18.9984, symbol: 'F', name2: 'Fluorine', weight2: 18.9984, symbol2: 'F' },
-  //   { position: 10, name: 'Neon', weight: 20.1797, symbol: 'Ne', name2: 'Neon', weight2: 20.1797, symbol2: 'Ne' },
-  //   { position: 11, name: 'Neon2', weight: 20.1797, symbol: 'Ne', name2: 'Neon2', weight2: 20.1797, symbol2: 'Ne' },
-  //   { position: 12, name: 'Neon3', weight: 20.1797, symbol: 'Ne', name2: 'Neon3', weight2: 20.1797, symbol2: 'Ne' }
-  // ];
-
 
 }
